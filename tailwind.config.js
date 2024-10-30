@@ -2,7 +2,16 @@
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        primary: "#8a2be2",
+        lightBg: "#F3F0FF",
+      },
+      fontFamily: {
+        primary: ["Lato", "sans-serif"],
+        secondary: ["Nunito Sans", "sans-serif"],
+      },
+    },
   },
   plugins: [],
 };
