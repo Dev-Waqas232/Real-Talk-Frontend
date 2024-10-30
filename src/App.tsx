@@ -3,6 +3,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import { useEffect } from "react";
 import Register from "./pages/Register";
+import { Toaster } from "react-hot-toast";
 
 export default function App() {
   const navigate = useNavigate();
@@ -12,10 +13,13 @@ export default function App() {
   }, []);
 
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-    </Routes>
+    <>
+      <Toaster position="top-right" reverseOrder={false} />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Routes>
+    </>
   );
 }

@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { FaRegEyeSlash, FaRegEye } from "react-icons/fa6";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useLoginMutation } from "../features/auth/authApi";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "../features/auth/authSlice";
+import toast from "react-hot-toast";
 
 type Inputs = {
   email: string;
@@ -11,9 +15,30 @@ type Inputs = {
 export default function Login() {
   const { register, handleSubmit } = useForm<Inputs>();
   const [showPass, setShowPass] = useState(false);
+  const [login, { isLoading }] = useLoginMutation();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  const onSubmit: SubmitHandler<Inputs> = (data) => {
+  const onSubmit: SubmitHandler<Inputs> = async (data) => {
     console.log(data);
+
+    try {
+      const response = await login(data).unwrap();
+      if (response.ok) {
+        toast.success("Login Successful!");
+        dispatch(
+          setCredentials({
+            token: response.data.token,
+            user: response.data.user,
+          })
+        );
+        navigate("/");
+      }
+    } catch (error: any) {
+      if (error.status === 404) {
+        toast.error(error.data.message);
+      }
+    }
   };
 
   return (
@@ -33,7 +58,7 @@ export default function Login() {
           <input
             type="email"
             className="input border bg-gray-50"
-            {...(register("email"), { required: true })}
+            {...register("email", { required: true })}
           />
         </div>
         <div className="form-control relative">
@@ -41,7 +66,7 @@ export default function Login() {
           <input
             type={showPass ? "text" : "password"}
             className="input border bg-gray-50"
-            {...(register("password"), { required: true, minLength: 6 })}
+            {...register("password", { required: true, minLength: 6 })}
           />
           <button
             onClick={() => setShowPass(!showPass)}
@@ -51,7 +76,9 @@ export default function Login() {
             {showPass ? <FaRegEye size={18} /> : <FaRegEyeSlash size={18} />}
           </button>
         </div>
-        <button className="btn">Login</button>
+        <button className="btn" disabled={isLoading}>
+          {isLoading ? "Please wait..." : "Login"}
+        </button>
         <p className="text-center mt-4 text-sm">
           Don't have an account?{" "}
           <Link to="/register" className="text-primary">

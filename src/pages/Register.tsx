@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { FaRegEyeSlash, FaRegEye } from "react-icons/fa6";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useSignupMutation } from "../features/auth/authApi";
+import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "../features/auth/authSlice";
 
 type Inputs = {
   username: string;
@@ -10,11 +14,37 @@ type Inputs = {
 };
 
 export default function Register() {
-  const { register, handleSubmit } = useForm<Inputs>();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<Inputs>();
   const [showPass, setShowPass] = useState(false);
+  const [signup, { isLoading }] = useSignupMutation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const onSubmit: SubmitHandler<Inputs> = (data) => {
+  const onSubmit: SubmitHandler<Inputs> = async (data) => {
     console.log(data);
+    try {
+      const response = await signup(data).unwrap();
+      if (response.ok) {
+        toast.success("Account Created");
+        dispatch(
+          setCredentials({
+            user: response.data.user,
+            token: response.data.token,
+          })
+        );
+        navigate("/");
+      }
+    } catch (error: any) {
+      if (error.status === 409) {
+        toast.error(error.data.message);
+      } else {
+        toast.error("Something Went Wrong");
+      }
+    }
   };
 
   return (
@@ -34,7 +64,13 @@ export default function Register() {
           <input
             className="input border bg-gray-50"
             type="text"
-            {...(register("username"), { required: true, minLength: 5 })}
+            {...register("username", {
+              required: true,
+              minLength: {
+                value: 5,
+                message: "User must contain at least 5 characters",
+              },
+            })}
           />
         </div>
         <div className="form-control">
@@ -42,7 +78,7 @@ export default function Register() {
           <input
             type="email"
             className="input border bg-gray-50"
-            {...(register("email"), { required: true })}
+            {...register("email", { required: true })}
           />
         </div>
         <div className="form-control relative">
@@ -50,7 +86,7 @@ export default function Register() {
           <input
             type={showPass ? "text" : "password"}
             className="input border bg-gray-50"
-            {...(register("password"), { required: true, minLength: 6 })}
+            {...register("password", { required: true, minLength: 6 })}
           />
           <button
             onClick={() => setShowPass(!showPass)}
@@ -60,7 +96,9 @@ export default function Register() {
             {showPass ? <FaRegEye size={18} /> : <FaRegEyeSlash size={18} />}
           </button>
         </div>
-        <button className="btn">Register</button>
+        <button className="btn" disabled={isLoading}>
+          {isLoading ? "Please wait..." : "Register"}
+        </button>
         <p className="text-center mt-4 text-sm">
           Already have an account?{" "}
           <Link to="/login" className="text-primary">
